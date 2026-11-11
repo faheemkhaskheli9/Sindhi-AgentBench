@@ -116,7 +116,7 @@ See [the phase plan](docs/plans/13-stateful-tool-failures.md). Run the four
 fixture validators to check gold calls against the simulator:
 
 ```bash
-for file in data/*tasks.jsonl; do sindhi-agentbench validate "$file"; done
+for file in data/*.jsonl; do sindhi-agentbench validate "$file"; done
 ```
 
 Each run stores the final fictional session state in the trace. Repeated

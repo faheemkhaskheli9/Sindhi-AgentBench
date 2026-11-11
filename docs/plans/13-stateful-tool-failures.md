@@ -1,7 +1,7 @@
 # Phase 3 — Stateful and adversarial tool-use evaluation
 
 Status: **Implemented foundation; human review and richer scenarios remain P0**.
-Owner: Sindhi-AgentBench. Existing issue: [#5](../../issues/5).
+Owner: Sindhi-AgentBench. Existing issue: [#5](https://github.com/faheemkhaskheli9/Sindhi-AgentBench/issues/5).
 
 ## Why
 

@@ -4,6 +4,9 @@
 
 Evaluate **real task execution**, not generic fluency or multiple-choice questions. A model must interpret a Sindhi, Roman Sindhi, Urdu, or English request; select the correct tool; supply correct arguments; execute against isolated mock services; and accurately explain the verified outcome.
 
+The current implementation phase is documented in
+[Phase 3 — Stateful and adversarial tool-use evaluation](plans/13-stateful-tool-failures.md).
+
 ## P0 — Reproducible harness (initial implementation)
 
 - [x] Strict versioned JSONL contracts for tasks, prediction traces, and separate human reviews.
