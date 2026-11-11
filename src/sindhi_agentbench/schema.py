@@ -48,6 +48,10 @@ class Task(StrictModel):
     def require_expected_action_consistency(self) -> "Task":
         if self.expected_behavior == "execute" and self.expected_call is None:
             raise ValueError("Executable tasks require expected_call")
+        if self.expected_behavior == "execute" and self.expected_status == "rejected":
+            error = self.expected_facts.get("error")
+            if not isinstance(error, str) or not error:
+                raise ValueError("Rejected gold calls require a nonempty expected error code")
         if self.confirmation_required and self.expected_behavior == "execute":
             raise ValueError("Unconfirmed tasks cannot expect executed actions")
         if self.expected_behavior != "execute" and (

@@ -96,3 +96,12 @@ def test_no_action_cannot_claim_rejected_gold_status():
     task["expected_status"] = "rejected"
     with pytest.raises(ValidationError):
         Task.model_validate(task)
+
+
+def test_rejected_gold_must_identify_specific_error():
+    data = next(
+        t for t in load_tasks(SCENARIOS) if t.expected_status == "rejected"
+    ).model_dump()
+    data["expected_facts"] = {}
+    with pytest.raises(ValidationError, match="expected error code"):
+        Task.model_validate(data)
