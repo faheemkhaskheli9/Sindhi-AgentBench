@@ -35,6 +35,7 @@ def run_benchmark(
     output_dir: Path,
     *,
     max_turns: int = 4,
+    max_tool_calls: int = 12,
     max_tasks: int | None = None,
     allow_unverified: bool = False,
 ) -> dict:
@@ -45,6 +46,8 @@ def run_benchmark(
     """
     if max_turns < 1:
         raise ValueError("max_turns must be at least 1")
+    if max_tool_calls < 1:
+        raise ValueError("max_tool_calls must be positive")
     if max_tasks is not None and max_tasks < 1:
         raise ValueError("max_tasks must be positive")
     tasks = load_tasks(dataset_path)
@@ -57,7 +60,10 @@ def run_benchmark(
     if output_dir.exists():
         raise FileExistsError(f"Refusing to overwrite existing output: {output_dir}")
 
-    runs = [run_task(task, adapter, max_turns=max_turns) for task in tasks]
+    runs = [
+        run_task(task, adapter, max_turns=max_turns, max_tool_calls=max_tool_calls)
+        for task in tasks
+    ]
     predictions = {run.task_id: run.as_prediction() for run in runs}
     report = evaluate(tasks, predictions)
     digest = hashlib.sha256(dataset_path.read_bytes()).hexdigest()
@@ -78,9 +84,10 @@ def run_benchmark(
         "sdk_version": _sdk_version(SDK_PACKAGES[cfg.provider]),
         "python_version": platform.python_version(),
         "max_turns": max_turns,
+        "max_tool_calls": max_tool_calls,
         "termination_counts": {
             reason: sum(run.termination.value == reason for run in runs)
-            for reason in ("complete", "max_turns", "adapter_error")
+            for reason in ("complete", "max_turns", "max_tool_calls", "adapter_error")
         },
     }
     output_dir.mkdir(parents=True)

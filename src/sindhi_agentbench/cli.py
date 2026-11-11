@@ -39,6 +39,7 @@ def main() -> None:
     model_run.add_argument("--max-tokens", type=int, default=512)
     model_run.add_argument("--seed", type=int)
     model_run.add_argument("--max-turns", type=int, default=4)
+    model_run.add_argument("--max-tool-calls", type=int, default=12)
     model_run.add_argument("--max-tasks", type=int)
     model_run.add_argument(
         "--allow-unverified", action="store_true",
@@ -52,7 +53,8 @@ def main() -> None:
         )
         result = run_benchmark(
             args.dataset, NativeAdapter(config), args.output_dir,
-            max_turns=args.max_turns, max_tasks=args.max_tasks,
+            max_turns=args.max_turns, max_tool_calls=args.max_tool_calls,
+            max_tasks=args.max_tasks,
             allow_unverified=args.allow_unverified,
         )
         print(json.dumps(result, ensure_ascii=False, indent=2))

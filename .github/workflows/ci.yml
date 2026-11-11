@@ -20,3 +20,5 @@ jobs:
       - run: pytest -q
       - run: sindhi-agentbench validate data/seed_tasks.jsonl
       - run: sindhi-agentbench validate data/edge_cases.jsonl
+      - run: sindhi-agentbench validate data/confirmation_tasks.jsonl
+      - run: sindhi-agentbench validate data/scenario_tasks.jsonl

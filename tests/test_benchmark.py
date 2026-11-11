@@ -27,6 +27,11 @@ class FakeAgent:
         return ModelTurn(content="Confirmed by simulated tool.")
 
 
+def trace_state_has_expected_balance(directory):
+    trace = json.loads((directory / "traces.jsonl").read_text().strip())
+    return trace["environment_state"]["balances"]["A-100"] == 5000
+
+
 def test_no_unverified_release_without_explicit_opt_in(tmp_path):
     with pytest.raises(ValueError, match="unverified"):
         run_benchmark(DATA, FakeAgent(), tmp_path / "output", max_tasks=1)
@@ -40,6 +45,9 @@ def test_smoke_run_writes_replayable_artifacts_and_never_overwrites(tmp_path):
     )
     assert result["overall"]["task_completion"] == 1
     assert result["manifest"]["leaderboard_eligible"] is False
+    assert result["manifest"]["max_tool_calls"] == 12
+    assert result["manifest"]["termination_counts"]["max_tool_calls"] == 0
+    assert trace_state_has_expected_balance(directory)
     assert result["manifest"]["dataset_sha256"] == hashlib.sha256(DATA.read_bytes()).hexdigest()
     assert json.loads((directory / "report.json").read_text())["evaluated_tasks"] == 1
     trace = json.loads((directory / "traces.jsonl").read_text().strip())
@@ -55,3 +63,8 @@ def test_invalid_limits_rejected(tmp_path, invalid):
         run_benchmark(DATA, FakeAgent(), tmp_path / "a", max_tasks=invalid, allow_unverified=True)
     with pytest.raises(ValueError):
         run_benchmark(DATA, FakeAgent(), tmp_path / "b", max_turns=invalid, allow_unverified=True)
+    with pytest.raises(ValueError):
+        run_benchmark(
+            DATA, FakeAgent(), tmp_path / "c",
+            max_tool_calls=invalid, allow_unverified=True,
+        )
