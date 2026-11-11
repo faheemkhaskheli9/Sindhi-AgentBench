@@ -11,7 +11,7 @@ Unlike ordinary language-generation benchmarks, Sindhi-AgentBench measures what 
 - Tool selection, strict argument accuracy, and simulated completion scoring by language.
 - Human-reviewed language fidelity and hallucination rates are `null` until an independent review is provided; missing reviews are never treated as perfect scores.
 - Provider-neutral bounded multi-turn runner with mock tool responses, no live API credentials or real service effects.
-- CLI, CI, unit tests and 16 **synthetic, unverified** starter cases (4 languages × 4 scenarios).
+- CLI, CI, unit tests and 16 **synthetic, unverified** starter cases (4 languages × 4 scenarios).\n- Eight additional synthetic clarification/refusal fixtures with no-call safety scoring; response appropriateness requires human review.
 
 ## Get started
 
@@ -86,8 +86,16 @@ Implement the `AgentAdapter.complete(messages, tools) -> ModelTurn` interface fr
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for the prioritized backlog, annotation protocol, leakage prevention, model adapters, dashboard, and publication gates. The hard blocker for a credible research release is **100–200 independently human-verified, diverse multilingual agent tasks**.
 
-The seed set is intentionally small, templated, synthetic, and **unverified**; it must not be used to claim any model outperforms another. Avoid placing private customer or government information in examples or logs.
+Both seed and edge-case datasets are intentionally small, synthetic, and **unverified**; it must not be used to claim any model outperforms another. Avoid placing private customer or government information in examples or logs.
 
 ## License
 
 Code is MIT-licensed. Licensing and consent for the future human-annotated dataset must be established separately before publication.
+
+## Clarification and refusal smoke tests
+
+`data/edge_cases.jsonl` supplies 8 unverified examples where calling a tool is
+incorrect. The evaluator can automatically check whether any tool was called, but
+`task_completion` stays `null` for no-call responses until an independent reviewer
+confirms that the user was properly asked for missing information or that a false
+assertion was appropriately refused. Review `data/EDGE_CASES.md` for scope.

@@ -11,7 +11,7 @@ Evaluate **real task execution**, not generic fluency or multiple-choice questio
 - [x] Offline tool-selection, exact-argument, and mock-execution scoring, stratified by language.
 - [x] Synthetic starter tasks, unit tests, CLI, and GitHub Actions CI.
 - [x] Implement provider-neutral multi-turn orchestration with mock tool observations and bounded turns (provider adapters pending).
-- [ ] Add refusal, ambiguous-intent, code-switching, prompt-injection, and tool-failure scenarios.
+- [x] Add synthetic refusal and ambiguous-intent no-action tasks with call-count safety scoring.\n- [ ] Add code-switching, prompt-injection and tool-failure cases.
 - [ ] Ensure no benchmark examples are visible to model adapters before evaluation.
 
 ## P0 — Dataset and annotation (research blocker)
@@ -42,7 +42,7 @@ Evaluate **real task execution**, not generic fluency or multiple-choice questio
 - [x] Preserve `null` for language fidelity and hallucination rate until independently reviewed.
 - [ ] Validate the **natural-language final answer** against tool outputs through blinded native-language review.
 - [ ] Measure unsupported claims, missing information, and inappropriate transaction confirmations.
-- [ ] Distinguish task completion from refusal correctness and safety-critical confirmation behavior.
+- [x] Distinguish no-action safety from human-reviewed clarification/refusal correctness.\n- [ ] Add safety-critical confirmation behavior and blinded native-language audits.
 - [ ] Publish confidence intervals, raw denominators, human-review coverage, and failure taxonomy.
 
 ## P1 — Product and publication
