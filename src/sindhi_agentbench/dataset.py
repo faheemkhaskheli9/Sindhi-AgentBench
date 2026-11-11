@@ -53,8 +53,11 @@ def validate_tasks(tasks: list[Task]) -> None:
         if task.expected_call.name != domain_tools[task.domain]:
             raise ValueError(f"{task.id}: tool does not match domain")
         actual = execute_mock(task.expected_call)
-        if actual.status != "success":
-            raise ValueError(f"{task.id}: gold call rejected: {actual.facts}")
+        if actual.status != task.expected_status:
+            raise ValueError(
+                f"{task.id}: expected status {task.expected_status}, "
+                f"simulator returned {actual.status}: {actual.facts}"
+            )
         for key, value in task.expected_facts.items():
             if (
                 key not in actual.facts

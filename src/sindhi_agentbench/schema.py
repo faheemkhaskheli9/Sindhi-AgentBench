@@ -38,6 +38,7 @@ class Task(StrictModel):
     expected_call: ToolCall | None
     expected_behavior: Literal["execute", "clarify", "refuse"] = "execute"
     confirmation_required: bool = False
+    expected_status: Literal["success", "rejected"] = "success"
     expected_facts: dict[str, Any] = Field(default_factory=dict)
     verification_status: Literal["unverified", "verified"] = "unverified"
     annotator_id: str | None = None
@@ -50,7 +51,9 @@ class Task(StrictModel):
         if self.confirmation_required and self.expected_behavior == "execute":
             raise ValueError("Unconfirmed tasks cannot expect executed actions")
         if self.expected_behavior != "execute" and (
-            self.expected_call is not None or self.expected_facts
+            self.expected_call is not None
+            or self.expected_facts
+            or self.expected_status != "success"
         ):
             raise ValueError("Clarification/refusal tasks cannot require a tool or result facts")
         return self
@@ -98,6 +101,7 @@ class TaskScore(StrictModel):
     language_fidelity: float | None = None
     hallucination_rate: float | None = None
     simulated_result: dict[str, Any] | None = None
+    execution_outcome: float | None = None
 
 
 class Report(StrictModel):

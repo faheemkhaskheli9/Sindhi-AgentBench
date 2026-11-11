@@ -10,6 +10,7 @@ _METRICS = (
     "parameter_accuracy",
     "task_completion",
     "behavior_correct",
+    "execution_outcome",
     "language_fidelity",
     "hallucination_rate",
 )
@@ -72,14 +73,24 @@ def score_task(task: Task, prediction: Prediction, review: HumanReview | None = 
         key in result.facts and same_value(value, result.facts[key])
         for key, value in task.expected_facts.items()
     )
-    completed = float(
-        bool(prediction.final_answer.strip())
-        and tool_correct == 1
+    outcome_correct = bool(
+        tool_correct == 1
         and param_accuracy == 1
         and result is not None
-        and result.status == "success"
+        and result.status == task.expected_status
         and facts_match
     )
+    if task.expected_status == "rejected":
+        # A correctly rejected tool action is not proof the agent explained
+        # the failure faithfully. It requires an independent answer review.
+        if not outcome_correct or not prediction.final_answer.strip():
+            completed: float | None = 0.0
+        elif review is None or review.behavior_correct is None:
+            completed = None
+        else:
+            completed = float(review.behavior_correct)
+    else:
+        completed = float(outcome_correct and bool(prediction.final_answer.strip()))
     return TaskScore(
         task_id=task.id,
         language=task.language,
@@ -92,6 +103,7 @@ def score_task(task: Task, prediction: Prediction, review: HumanReview | None = 
         language_fidelity=review.language_fidelity if review else None,
         hallucination_rate=float(review.hallucinated) if review else None,
         simulated_result=result.model_dump() if result else None,
+        execution_outcome=float(outcome_correct),
     )
 
 
