@@ -27,13 +27,13 @@ Evaluate **real task execution**, not generic fluency or multiple-choice questio
 
 ## P0 — Model support
 
-- [ ] Define a provider-agnostic conversation and tool schema with audit logs.
-- [ ] OpenAI adapter.
-- [ ] Gemini adapter.
-- [ ] Claude adapter.
-- [ ] Hugging Face Transformers adapter.
-- [ ] Ollama adapter.
-- [ ] Normalize equivalent tool-call events; record model, version, provider, decoding settings, retries, latency, and price at evaluation time.
+- [x] Define a provider-agnostic conversation and tool schema with recorded tool traces.
+- [x] OpenAI native adapter (offline SDK-contract tests; live validation pending).
+- [x] Gemini native adapter (offline SDK-contract tests; live validation pending).
+- [x] Claude native adapter (offline SDK-contract tests; live validation pending).
+- [x] Hugging Face hosted Inference Providers native tool-call adapter (local Transformers pending).
+- [x] Ollama native tool-call adapter (offline SDK-contract tests; local-model validation pending).
+- [x] Normalize tool calls and record requested model, SDK version, decoding settings, task selection, dataset hash and elapsed time.\n- [ ] Add real-provider smoke tests, provider-returned model revision, token use, costs and retry policy.
 - [ ] Repeat runs with fixed settings to measure variance. Never silently retry only unsuccessful models.
 
 ## P0 — Scoring protocol
@@ -49,7 +49,7 @@ Evaluate **real task execution**, not generic fluency or multiple-choice questio
 
 - [ ] FastAPI service for benchmark results and tool schemas; do not expose real banking / government integrations.
 - [ ] Streamlit leaderboard filtered by language, domain, model version, and evaluation date.
-- [ ] Immutable run manifests and replayable JSONL logs; release an independent scoring script.
+- [x] New run manifests with dataset hash, metadata and replayable JSONL logs; remaining: signed/immutable release process and independent scoring script.
 - [ ] Research baseline report, annotation guidelines, benchmark card, known biases, and limitations.
 - [ ] Publish reviewed benchmark dataset through Hugging Face Datasets and archive versioned releases.
 
@@ -60,3 +60,11 @@ Evaluate **real task execution**, not generic fluency or multiple-choice questio
 - `task_completion` currently means correct simulated action plus a non-empty final answer; it does **not** verify answer truthfulness or language, which are reviewed separately.
 - Every mock execution is independent and stateless, so repeat calls do not deplete inventory or transfer real value.
 - The benchmark is not yet valid for claiming superior Sindhi-language performance by any model.
+
+## Execution order (next)
+
+1. [Issue #3](https://github.com/faheemkhaskheli9/Sindhi-AgentBench/issues/3): validate five providers against real tool-capable models, harden retry/usage handling, and evaluate local Transformers support.
+2. [Issue #5](https://github.com/faheemkhaskheli9/Sindhi-AgentBench/issues/5): implement transaction-state, ambiguity, refusals, service failures and code-switching cases.
+3. [Issue #4](https://github.com/faheemkhaskheli9/Sindhi-AgentBench/issues/4): blinded review and grounded final-answer evaluation.
+4. [Issue #2](https://github.com/faheemkhaskheli9/Sindhi-AgentBench/issues/2): recruit native speakers, verify 100–200 original tasks and hold out scenario groups.
+5. [Issues #6–7](https://github.com/faheemkhaskheli9/Sindhi-AgentBench/issues): leaderboard and research release after validation.

@@ -12,6 +12,11 @@ dependencies = ["pydantic>=2.6,<3"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.8"]
+openai = ["openai>=2,<4"]
+gemini = ["google-genai>=1,<3"]
+claude = ["anthropic>=0.50,<2"]
+huggingface = ["huggingface-hub>=0.34,<2"]
+ollama = ["ollama>=0.5,<2"]
 
 [project.scripts]
 sindhi-agentbench = "sindhi_agentbench.cli:main"

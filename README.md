@@ -45,6 +45,39 @@ The other 15 tasks must also have corresponding predictions for a full-dataset r
 
 `task_completion` currently verifies simulated action success plus a nonempty final answer, **not** the semantic truthfulness of the answer. That requires independent review. Each tool execution is an isolated deterministic simulation, not a persistent transaction system.
 
+## Run an actual model
+
+Install only the provider you use. Examples:
+
+```bash
+pip install -e '.[dev,openai]'   # OPENAI_API_KEY environment variable required
+pip install -e '.[gemini]'       # GOOGLE_API_KEY environment variable required
+pip install -e '.[claude]'       # ANTHROPIC_API_KEY environment variable required
+pip install -e '.[huggingface]'  # HF_TOKEN; remote inference provider must support tools
+pip install -e '.[ollama]'       # Local Ollama server and downloaded model needed
+```
+
+Run an isolated tool simulation using a model (real model calls may incur charges):
+
+```bash
+sindhi-agentbench run-model data/seed_tasks.jsonl \
+  --provider ollama --model YOUR_TOOL_CAPABLE_MODEL \
+  --output-dir results/local-smoke-01 --max-tasks 4 --allow-unverified
+```
+
+The CLI writes a run manifest (including dataset SHA-256, provider SDK version, model
+settings and task selection), normalized predictions, tool transcripts and scored report.
+It **refuses to overwrite** a previous run. The starter dataset is unverified, so
+`--allow-unverified` is required for smoke testing and the manifest always flags
+runs as **not eligible** for a research leaderboard. Do not commit credentials or
+personal information to traces. Different models/providers may not support the same
+subset of tool JSON schemas; unsupported native tool calling should fail visibly.
+
+Supported native tool adapters: OpenAI, Gemini, Claude, Hugging Face Inference Providers,
+and Ollama. The Hugging Face adapter uses hosted inference rather than local Transformers.
+No API-key-dependent tests run in CI; real-provider compatibility must be validated
+before publishing baseline numbers.
+
 ## Integrate a model adapter
 
 Implement the `AgentAdapter.complete(messages, tools) -> ModelTurn` interface from `sindhi_agentbench.runner`. A task runs through `run_task(task, adapter)` with a bounded tool-execution loop, and `run.as_prediction()` can be scored with the existing evaluator. Tool results are strictly fictional and isolated. Provider SDK integrations are tracked separately in GitHub issues.
