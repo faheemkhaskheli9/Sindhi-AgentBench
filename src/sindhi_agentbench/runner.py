@@ -126,7 +126,9 @@ def run_task(task: Task, adapter: AgentAdapter, max_turns: int = 4) -> AgentRun:
                 elapsed_ms=(perf_counter() - start) * 1000,
                 error_type=type(exc).__name__,
             )
-        messages.append(Message(role=Role.ASSISTANT, content=turn.content, tool_calls=turn.tool_calls))
+        messages.append(Message(
+            role=Role.ASSISTANT, content=turn.content, tool_calls=turn.tool_calls
+        ))
         if not turn.tool_calls:
             return AgentRun(
                 task_id=task.id, messages=messages, actions=actions,

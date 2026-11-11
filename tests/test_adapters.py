@@ -1,5 +1,6 @@
 """Offline SDK-contract tests: no credentials, payments, or live HTTP calls."""
 
+from pathlib import Path
 from types import SimpleNamespace as NS
 
 import pytest
@@ -8,7 +9,6 @@ from sindhi_agentbench.adapters import AdapterConfig, NativeAdapter
 from sindhi_agentbench.dataset import load_tasks
 from sindhi_agentbench.runner import Termination, run_task
 
-from pathlib import Path
 
 TASK = load_tasks(Path(__file__).resolve().parents[1] / "data" / "seed_tasks.jsonl")[-1]
 
@@ -75,7 +75,8 @@ def test_claude_tool_result_linking_and_grouping():
                             "input": {"application_id": "APP-123"}}]}, "claude")
     adapter = NativeAdapter(AdapterConfig("claude", "fake"), client=spy)
     from sindhi_agentbench.runner import Message, Role, tool_specs
-    call = adapter.complete([Message(role=Role.USER, content=TASK.prompt)], tool_specs()).tool_calls[0]
+    turn = adapter.complete([Message(role=Role.USER, content=TASK.prompt)], tool_specs())
+    call = turn.tool_calls[0]
     assert call.call_id == "toolu-1"
     adapter.complete([
         Message(role=Role.SYSTEM, content="sandbox"),
@@ -96,7 +97,8 @@ def test_gemini_native_function_calls_and_observations():
     ]}}]}, "gemini")
     adapter = NativeAdapter(AdapterConfig("gemini", "fake"), client=spy)
     from sindhi_agentbench.runner import Message, Role, tool_specs
-    call = adapter.complete([Message(role=Role.USER, content=TASK.prompt)], tool_specs()).tool_calls[0]
+    turn = adapter.complete([Message(role=Role.USER, content=TASK.prompt)], tool_specs())
+    call = turn.tool_calls[0]
     assert call.call_id == "gem-1"
     adapter.complete([
         Message(role=Role.SYSTEM, content="sandbox"),
@@ -118,7 +120,8 @@ def test_ollama_native_call_object_arguments_and_observations():
     }}]}}, "ollama")
     adapter = NativeAdapter(AdapterConfig("ollama", "fake", seed=5), client=spy)
     from sindhi_agentbench.runner import Message, Role, tool_specs
-    call = adapter.complete([Message(role=Role.USER, content=TASK.prompt)], tool_specs()).tool_calls[0]
+    turn = adapter.complete([Message(role=Role.USER, content=TASK.prompt)], tool_specs())
+    call = turn.tool_calls[0]
     assert call.name == "government.check_application"
     assert spy.calls[-1]["options"]["seed"] == 5
     adapter.complete([
