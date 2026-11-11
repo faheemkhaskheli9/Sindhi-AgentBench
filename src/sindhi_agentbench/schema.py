@@ -27,6 +27,7 @@ class Domain(str, Enum):
 class ToolCall(StrictModel):
     name: str = Field(min_length=1)
     arguments: dict[str, Any]
+    call_id: str | None = None
 
 
 class Task(StrictModel):

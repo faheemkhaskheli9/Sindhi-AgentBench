@@ -30,6 +30,8 @@ class Message(BaseContract):
     content: str
     tool_name: str | None = None
     tool_call: ToolCall | None = None
+    tool_calls: list[ToolCall] = Field(default_factory=list)
+    tool_call_id: str | None = None
 
 
 class ToolSpec(BaseContract):
@@ -124,7 +126,7 @@ def run_task(task: Task, adapter: AgentAdapter, max_turns: int = 4) -> AgentRun:
                 elapsed_ms=(perf_counter() - start) * 1000,
                 error_type=type(exc).__name__,
             )
-        messages.append(Message(role=Role.ASSISTANT, content=turn.content))
+        messages.append(Message(role=Role.ASSISTANT, content=turn.content, tool_calls=turn.tool_calls))
         if not turn.tool_calls:
             return AgentRun(
                 task_id=task.id, messages=messages, actions=actions,
@@ -136,11 +138,9 @@ def run_task(task: Task, adapter: AgentAdapter, max_turns: int = 4) -> AgentRun:
             result = execute_mock(call)
             actions.append(ExecutedAction(call=call, result=result))
             messages.append(Message(
-                role=Role.ASSISTANT, content="", tool_call=call
-            ))
-            messages.append(Message(
                 role=Role.TOOL,
                 tool_name=call.name,
+                tool_call_id=call.call_id,
                 content=json.dumps(result.model_dump(), ensure_ascii=False),
             ))
     return AgentRun(
