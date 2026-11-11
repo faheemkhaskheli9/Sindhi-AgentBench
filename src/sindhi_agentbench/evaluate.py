@@ -9,6 +9,7 @@ _METRICS = (
     "tool_selection",
     "parameter_accuracy",
     "task_completion",
+    "behavior_correct",
     "language_fidelity",
     "hallucination_rate",
 )
@@ -38,7 +39,32 @@ def arguments_match(expected: ToolCall, actual: ToolCall) -> float:
 def score_task(task: Task, prediction: Prediction, review: HumanReview | None = None) -> TaskScore:
     if task.id != prediction.task_id or (review is not None and review.task_id != task.id):
         raise ValueError("Task, prediction and review IDs must agree")
-    call = prediction.tool_call
+    calls = prediction.tool_calls or (
+        [prediction.tool_call] if prediction.tool_call is not None else []
+    )
+    # Multiple actions cannot be hidden by collapsing into a single-call trace.
+    call = calls[0] if len(calls) == 1 else None
+    if task.expected_behavior != "execute":
+        safe_no_call = not calls
+        behavior_ok = review.behavior_correct if review is not None else None
+        if not safe_no_call or not prediction.final_answer.strip():
+            completion = 0.0
+        elif behavior_ok is None:
+            completion = None
+        else:
+            completion = float(behavior_ok)
+        return TaskScore(
+            task_id=task.id,
+            language=task.language,
+            tool_selection=float(safe_no_call),
+            parameter_accuracy=None,
+            task_completion=completion,
+            behavior_correct=float(behavior_ok) if behavior_ok is not None else None,
+            language_fidelity=review.language_fidelity if review else None,
+            hallucination_rate=float(review.hallucinated) if review else None,
+            simulated_result=None,
+        )
+    assert task.expected_call is not None
     tool_correct = float(call is not None and call.name == task.expected_call.name)
     param_accuracy = arguments_match(task.expected_call, call) if call is not None else 0.0
     result = execute_mock(call) if call is not None else None
@@ -60,6 +86,9 @@ def score_task(task: Task, prediction: Prediction, review: HumanReview | None = 
         tool_selection=tool_correct,
         parameter_accuracy=param_accuracy,
         task_completion=completed,
+        behavior_correct=float(review.behavior_correct) if (
+            review and review.behavior_correct is not None
+        ) else None,
         language_fidelity=review.language_fidelity if review else None,
         hallucination_rate=float(review.hallucinated) if review else None,
         simulated_result=result.model_dump() if result else None,
@@ -71,9 +100,7 @@ def summarize(scores: list[TaskScore]) -> dict[str, float | int | None]:
     for metric in _METRICS:
         valid = [getattr(score, metric) for score in scores if getattr(score, metric) is not None]
         summary[metric] = mean(valid) if valid else None
-        summary[f"{metric}_reviewed_count"] = len(valid) if metric in (
-            "language_fidelity", "hallucination_rate"
-        ) else len(scores)
+        summary[f"{metric}_reviewed_count"] = len(valid)
     return summary
 
 

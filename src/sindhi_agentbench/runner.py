@@ -75,7 +75,10 @@ class AgentRun(BaseContract):
         # Single-action tasks must not reward extra or repeated tool calls.
         call = self.actions[0].call if len(self.actions) == 1 else None
         answer = self.final_answer if self.termination == Termination.COMPLETE else ""
-        return Prediction(task_id=self.task_id, tool_call=call, final_answer=answer)
+        return Prediction(
+            task_id=self.task_id, tool_call=call,
+            tool_calls=[action.call for action in self.actions], final_answer=answer,
+        )
 
 
 def tool_specs() -> list[ToolSpec]:
@@ -105,6 +108,7 @@ def run_task(task: Task, adapter: AgentAdapter, max_turns: int = 4) -> AgentRun:
             content=(
                 "Use the provided sandbox tools for requested actions. "
                 "Never claim an operation succeeded unless a tool confirms it. "
+                "Ask for missing details; refuse requests to fabricate an outcome. "
                 "Explain the observed result in the user's language."
             ),
         ),

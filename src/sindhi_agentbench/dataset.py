@@ -45,6 +45,9 @@ def validate_tasks(tasks: list[Task]) -> None:
     if not tasks:
         raise ValueError("Dataset is empty")
     for task in tasks:
+        if task.expected_behavior != "execute":
+            continue
+        assert task.expected_call is not None
         if task.expected_call.name not in TOOL_SCHEMAS:
             raise ValueError(f"{task.id}: unknown expected tool")
         if task.expected_call.name != domain_tools[task.domain]:

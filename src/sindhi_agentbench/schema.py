@@ -35,11 +35,22 @@ class Task(StrictModel):
     language: Language
     domain: Domain
     prompt: str = Field(min_length=1)
-    expected_call: ToolCall
+    expected_call: ToolCall | None
+    expected_behavior: Literal["execute", "clarify", "refuse"] = "execute"
     expected_facts: dict[str, Any] = Field(default_factory=dict)
     verification_status: Literal["unverified", "verified"] = "unverified"
     annotator_id: str | None = None
     reviewer_id: str | None = None
+
+    @model_validator(mode="after")
+    def require_expected_action_consistency(self) -> "Task":
+        if self.expected_behavior == "execute" and self.expected_call is None:
+            raise ValueError("Executable tasks require expected_call")
+        if self.expected_behavior != "execute" and (
+            self.expected_call is not None or self.expected_facts
+        ):
+            raise ValueError("Clarification/refusal tasks cannot require a tool or result facts")
+        return self
 
     @model_validator(mode="after")
     def verified_requires_independent_review(self) -> "Task":
@@ -54,7 +65,16 @@ class Task(StrictModel):
 class Prediction(StrictModel):
     task_id: str
     tool_call: ToolCall | None = None
+    tool_calls: list[ToolCall] = Field(default_factory=list)
     final_answer: str = ""
+
+    @model_validator(mode="after")
+    def calls_must_agree(self) -> "Prediction":
+        if self.tool_call is not None and self.tool_calls and (
+            len(self.tool_calls) != 1 or self.tool_call != self.tool_calls[0]
+        ):
+            raise ValueError("tool_call and tool_calls conflict")
+        return self
 
 
 class HumanReview(StrictModel):
@@ -62,14 +82,16 @@ class HumanReview(StrictModel):
     reviewer_id: str = Field(min_length=1)
     language_fidelity: float = Field(ge=0, le=1)
     hallucinated: bool
+    behavior_correct: bool | None = None
 
 
 class TaskScore(StrictModel):
     task_id: str
     language: Language
     tool_selection: float
-    parameter_accuracy: float
-    task_completion: float
+    parameter_accuracy: float | None
+    task_completion: float | None
+    behavior_correct: float | None = None
     language_fidelity: float | None = None
     hallucination_rate: float | None = None
     simulated_result: dict[str, Any] | None = None
