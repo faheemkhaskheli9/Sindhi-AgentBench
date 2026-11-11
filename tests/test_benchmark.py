@@ -29,7 +29,7 @@ class FakeAgent:
 
 def trace_state_has_expected_balance(directory):
     trace = json.loads((directory / "traces.jsonl").read_text().strip())
-    return trace["environment_state"]["balances"]["A-100"] == 5000
+    return trace["environment_state"]["balances"] == {"A-100": 3500, "B-200": 1500}
 
 
 def test_no_unverified_release_without_explicit_opt_in(tmp_path):
