@@ -60,9 +60,12 @@ def _ids(messages: list[Message]) -> dict[tuple[int, int | None], str]:
                 ids[(i, j)] = value
                 pending.append(value)
         if msg.role == Role.TOOL:
-            ids[(i, None)] = msg.tool_call_id or (
-                pending.pop(0) if pending else f"unmatched_{i}"
-            )
+            if msg.tool_call_id:
+                ids[(i, None)] = msg.tool_call_id
+                if msg.tool_call_id in pending:
+                    pending.remove(msg.tool_call_id)
+            else:
+                ids[(i, None)] = pending.pop(0) if pending else f"unmatched_{i}"
     return ids
 
 

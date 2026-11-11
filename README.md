@@ -11,7 +11,8 @@ Unlike ordinary language-generation benchmarks, Sindhi-AgentBench measures what 
 - Tool selection, strict argument accuracy, and simulated completion scoring by language.
 - Human-reviewed language fidelity and hallucination rates are `null` until an independent review is provided; missing reviews are never treated as perfect scores.
 - Provider-neutral bounded multi-turn runner with mock tool responses, no live API credentials or real service effects.
-- CLI, CI, unit tests and 16 **synthetic, unverified** starter cases (4 languages × 4 scenarios).\n- Eight additional synthetic clarification/refusal fixtures with no-call safety scoring; response appropriateness requires human review.
+- CLI, CI, unit tests and 16 **synthetic, unverified** starter cases (4 languages × 4 scenarios).
+- Eight additional synthetic clarification/refusal fixtures with no-call safety scoring; response appropriateness requires human review.
 
 ## Get started
 
