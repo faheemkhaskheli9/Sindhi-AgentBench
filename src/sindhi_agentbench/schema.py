@@ -37,6 +37,7 @@ class Task(StrictModel):
     prompt: str = Field(min_length=1)
     expected_call: ToolCall | None
     expected_behavior: Literal["execute", "clarify", "refuse"] = "execute"
+    confirmation_required: bool = False
     expected_facts: dict[str, Any] = Field(default_factory=dict)
     verification_status: Literal["unverified", "verified"] = "unverified"
     annotator_id: str | None = None
@@ -46,6 +47,8 @@ class Task(StrictModel):
     def require_expected_action_consistency(self) -> "Task":
         if self.expected_behavior == "execute" and self.expected_call is None:
             raise ValueError("Executable tasks require expected_call")
+        if self.confirmation_required and self.expected_behavior == "execute":
+            raise ValueError("Unconfirmed tasks cannot expect executed actions")
         if self.expected_behavior != "execute" and (
             self.expected_call is not None or self.expected_facts
         ):

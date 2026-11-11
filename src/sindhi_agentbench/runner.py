@@ -10,7 +10,7 @@ from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from sindhi_agentbench.environments import TOOL_SCHEMAS, ToolResult, execute_mock
+from sindhi_agentbench.environments import TOOL_SCHEMAS, MockSession, ToolResult
 from sindhi_agentbench.schema import Prediction, Task, ToolCall
 
 
@@ -60,6 +60,7 @@ class Termination(str, Enum):
     COMPLETE = "complete"
     MAX_TURNS = "max_turns"
     ADAPTER_ERROR = "adapter_error"
+    MAX_TOOL_CALLS = "max_tool_calls"
 
 
 class AgentRun(BaseContract):
@@ -70,6 +71,7 @@ class AgentRun(BaseContract):
     termination: Termination
     elapsed_ms: float = Field(ge=0)
     error_type: str | None = None
+    environment_state: dict | None = None
 
     def as_prediction(self) -> Prediction:
         # Single-action tasks must not reward extra or repeated tool calls.
@@ -94,7 +96,9 @@ def tool_specs() -> list[ToolSpec]:
     ]
 
 
-def run_task(task: Task, adapter: AgentAdapter, max_turns: int = 4) -> AgentRun:
+def run_task(
+    task: Task, adapter: AgentAdapter, max_turns: int = 4, max_tool_calls: int = 12
+) -> AgentRun:
     """Run an isolated task; one model turn may contain several calls.
 
     A new conversation and mock invocation context are built for every run. Tool
@@ -102,6 +106,9 @@ def run_task(task: Task, adapter: AgentAdapter, max_turns: int = 4) -> AgentRun:
     """
     if max_turns < 1:
         raise ValueError("max_turns must be at least 1")
+    if max_tool_calls < 1:
+        raise ValueError("max_tool_calls must be at least 1")
+    session = MockSession(confirmation_required=task.confirmation_required)
     messages = [
         Message(
             role=Role.SYSTEM,
@@ -129,6 +136,7 @@ def run_task(task: Task, adapter: AgentAdapter, max_turns: int = 4) -> AgentRun:
                 termination=Termination.ADAPTER_ERROR,
                 elapsed_ms=(perf_counter() - start) * 1000,
                 error_type=type(exc).__name__,
+                environment_state=session.snapshot(),
             )
         messages.append(Message(
             role=Role.ASSISTANT, content=turn.content, tool_calls=turn.tool_calls
@@ -139,9 +147,17 @@ def run_task(task: Task, adapter: AgentAdapter, max_turns: int = 4) -> AgentRun:
                 final_answer=turn.content,
                 termination=Termination.COMPLETE,
                 elapsed_ms=(perf_counter() - start) * 1000,
+                environment_state=session.snapshot(),
             )
         for call in turn.tool_calls:
-            result = execute_mock(call)
+            if len(actions) >= max_tool_calls:
+                return AgentRun(
+                    task_id=task.id, messages=messages, actions=actions, final_answer="",
+                    termination=Termination.MAX_TOOL_CALLS,
+                    elapsed_ms=(perf_counter() - start) * 1000,
+                    environment_state=session.snapshot(),
+                )
+            result = session.execute(call)
             actions.append(ExecutedAction(call=call, result=result))
             messages.append(Message(
                 role=Role.TOOL,
@@ -152,4 +168,5 @@ def run_task(task: Task, adapter: AgentAdapter, max_turns: int = 4) -> AgentRun:
     return AgentRun(
         task_id=task.id, messages=messages, actions=actions, final_answer="",
         termination=Termination.MAX_TURNS, elapsed_ms=(perf_counter() - start) * 1000,
+        environment_state=session.snapshot(),
     )
