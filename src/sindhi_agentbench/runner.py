@@ -27,7 +27,7 @@ class Role(str, Enum):
 
 class Message(BaseContract):
     role: Role
-    content: str
+    content: str = ""
     tool_name: str | None = None
     tool_call: ToolCall | None = None
     tool_calls: list[ToolCall] = Field(default_factory=list)
