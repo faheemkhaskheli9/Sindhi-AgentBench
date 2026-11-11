@@ -9,7 +9,6 @@ from sindhi_agentbench.adapters import AdapterConfig, NativeAdapter
 from sindhi_agentbench.dataset import load_tasks
 from sindhi_agentbench.runner import Termination, run_task
 
-
 TASK = load_tasks(Path(__file__).resolve().parents[1] / "data" / "seed_tasks.jsonl")[-1]
 
 
