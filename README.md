@@ -10,6 +10,7 @@ Unlike ordinary language-generation benchmarks, Sindhi-AgentBench measures what 
 - Deterministic, isolated **mock** banking, booking, shopping, and government-service tools. No real transactions or external API calls.
 - Tool selection, strict argument accuracy, and simulated completion scoring by language.
 - Human-reviewed language fidelity and hallucination rates are `null` until an independent review is provided; missing reviews are never treated as perfect scores.
+- Provider-neutral bounded multi-turn runner with mock tool responses, no live API credentials or real service effects.
 - CLI, CI, unit tests and 16 **synthetic, unverified** starter cases (4 languages × 4 scenarios).
 
 ## Get started
@@ -43,6 +44,10 @@ The other 15 tasks must also have corresponding predictions for a full-dataset r
 ```
 
 `task_completion` currently verifies simulated action success plus a nonempty final answer, **not** the semantic truthfulness of the answer. That requires independent review. Each tool execution is an isolated deterministic simulation, not a persistent transaction system.
+
+## Integrate a model adapter
+
+Implement the `AgentAdapter.complete(messages, tools) -> ModelTurn` interface from `sindhi_agentbench.runner`. A task runs through `run_task(task, adapter)` with a bounded tool-execution loop, and `run.as_prediction()` can be scored with the existing evaluator. Tool results are strictly fictional and isolated. Provider SDK integrations are tracked separately in GitHub issues.
 
 ## Research and development
 

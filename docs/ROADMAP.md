@@ -10,7 +10,7 @@ Evaluate **real task execution**, not generic fluency or multiple-choice questio
 - [x] Isolated deterministic tool simulators for banking, booking, shopping, and government services.
 - [x] Offline tool-selection, exact-argument, and mock-execution scoring, stratified by language.
 - [x] Synthetic starter tasks, unit tests, CLI, and GitHub Actions CI.
-- [ ] Integrate model-generated tool calls and post-tool explanations (multi-turn tool-use loop).
+- [x] Implement provider-neutral multi-turn orchestration with mock tool observations and bounded turns (provider adapters pending).
 - [ ] Add refusal, ambiguous-intent, code-switching, prompt-injection, and tool-failure scenarios.
 - [ ] Ensure no benchmark examples are visible to model adapters before evaluation.
 
