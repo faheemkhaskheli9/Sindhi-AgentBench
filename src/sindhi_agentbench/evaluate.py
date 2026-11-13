@@ -121,8 +121,30 @@ def evaluate(
     predictions: dict[str, Prediction],
     reviews: dict[str, HumanReview] | None = None,
 ) -> Report:
+    """Evaluate a unique set of tasks without inflating denominators.
+
+    Duplicate task IDs must fail even if predictions were keyed correctly:
+
+    >>> from sindhi_agentbench.schema import ToolCall
+    >>> task = Task(id="repeat", language="en", domain="government",
+    ...             prompt="Check application",
+    ...             expected_call=ToolCall(name="government.check_application",
+    ...                                    arguments={"application_id": "APP-123"}))
+    >>> guess = Prediction(task_id="repeat", tool_call=task.expected_call,
+    ...                    final_answer="Checked")
+    >>> evaluate([task, task], {"repeat": guess})
+    Traceback (most recent call last):
+    ...
+    ValueError: Duplicate task ids: ['repeat']
+    """
     reviews = reviews or {}
     ids = {task.id for task in tasks}
+    if len(ids) != len(tasks):
+        from collections import Counter
+
+        counts = Counter(task.id for task in tasks)
+        duplicates = sorted(task_id for task_id, count in counts.items() if count > 1)
+        raise ValueError(f"Duplicate task ids: {duplicates}")
     unknown_predictions = predictions.keys() - ids
     unknown_reviews = reviews.keys() - ids
     if unknown_predictions or unknown_reviews:
