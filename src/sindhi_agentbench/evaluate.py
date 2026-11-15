@@ -17,8 +17,28 @@ _METRICS = (
 
 
 def same_value(a: object, b: object) -> bool:
-    """Prevent bool == 1 or int == float from passing a strict argument check."""
-    return type(a) is type(b) and a == b
+    """Compare JSON-like values without nested numeric/bool coercion.
+
+    >>> same_value({"items": [1, {"ok": False}]}, {"items": [1, {"ok": 0}]})
+    False
+    >>> same_value({"items": [1, {"ok": False}]}, {"items": [1, {"ok": False}]})
+    True
+    >>> same_value([1], [1.0])
+    False
+    >>> same_value({"a": 1}, {"a": 1, "b": 2})
+    False
+    """
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(
+            same_value(value, b[key]) for key, value in a.items()
+        )
+    if isinstance(a, list):
+        return len(a) == len(b) and all(
+            same_value(left, right) for left, right in zip(a, b)
+        )
+    return a == b
 
 
 def arguments_match(expected: ToolCall, actual: ToolCall) -> float:
