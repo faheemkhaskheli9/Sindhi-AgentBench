@@ -3,8 +3,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from sindhi_agentbench.dataset import load_tasks, unique_by_task_id, validate_tasks
-from sindhi_agentbench.schema import Task
+from sindhi_agentbench.dataset import load_tasks, read_jsonl, unique_by_task_id, validate_tasks
+from sindhi_agentbench.schema import Prediction, Task
 
 DATASET = Path(__file__).resolve().parents[1] / "data" / "seed_tasks.jsonl"
 
@@ -40,3 +40,31 @@ def test_gold_result_disagreement_fails():
     task = load_tasks(DATASET)[0].model_copy(update={"expected_facts": {"amount_pkr": 999}})
     with pytest.raises(ValueError, match="contradicts"):
         validate_tasks([task])
+
+
+@pytest.mark.parametrize(
+    "payload, key",
+    [
+        ('{"task_id":"a","task_id":"b"}', "task_id"),
+        (
+            '{"task_id":"a","tool_call":{"name":"bank.transfer",'
+            '"arguments":{"amount_pkr":1,"amount_pkr":2}}}',
+            "amount_pkr",
+        ),
+    ],
+)
+def test_jsonl_rejects_duplicate_keys_at_any_depth(tmp_path, payload, key):
+    path = tmp_path / "predictions.jsonl"
+    path.write_text(payload + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=f"predictions.jsonl:1: Duplicate JSON key: {key}"):
+        read_jsonl(path, Prediction)
+
+
+def test_jsonl_allows_same_key_in_separate_objects(tmp_path):
+    path = tmp_path / "predictions.jsonl"
+    path.write_text(
+        '{"task_id":"a","tool_call":{"name":"bank.transfer","arguments":{"x":1}},'
+        '"tool_calls":[{"name":"bank.transfer","arguments":{"x":1}}]}\n',
+        encoding="utf-8",
+    )
+    assert read_jsonl(path, Prediction)[0].task_id == "a"

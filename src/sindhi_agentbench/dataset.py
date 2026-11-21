@@ -12,13 +12,23 @@ from sindhi_agentbench.schema import Domain, HumanReview, Prediction, Task
 T = TypeVar("T", bound=BaseModel)
 
 
+def _reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject ambiguous JSON objects, including nested tool arguments."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"Duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def read_jsonl(path: str | Path, schema: type[T]) -> list[T]:
     rows: list[T] = []
     for line_number, line in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
             continue
         try:
-            rows.append(schema.model_validate(json.loads(line)))
+            rows.append(schema.model_validate(json.loads(line, object_pairs_hook=_reject_duplicate_keys)))
         except (ValueError, TypeError) as exc:
             raise ValueError(f"{path}:{line_number}: {exc}") from exc
     return rows
